@@ -1,57 +1,23 @@
 const uri = require('url');
-const fs = require('fs');
-const http = require('http');
-const https = require('https');
+
+const request = require('request');
+
 const DOMParser = require('xmldom').DOMParser;
 
 function get(url, options, cb) {
   url = uri.parse(url);
-  const httpModule = url.protocol === 'https:' ? https : http;
-  if (url.protocol === 'file:') {
-    fs.readFile(url.pathname, 'utf8', function(err, data) {
-      if (err) {
-        return cb(err);
-      }
-      const xml = new DOMParser().parseFromString(data);
-      cb(null, xml);
-    });
-  } else {
-    let timing;
-    let data = '';
-
-    const timeoutWrapper = req => () => req.abort();
-
-    const opt = {
-      method: 'GET',
-      path: url.href
-    };
-    if (options.host) {
-      opt.host = options.host;
-    }
-    if (options.port) {
-      opt.port = options.port;
-    }
-    const req = httpModule.get(opt, function(res) {
-      res.on('data', function(chunk) {
-        data += chunk;
-        clearTimeout(timing);
-        timing = setTimeout(fn, options.timeout || 120000);
-      });
-      res.on('end', function() {
-        clearTimeout(timing);
-        const xml = new DOMParser().parseFromString(data);
-        cb(null, xml);
-      });
-    });
-
-    req.on('error', function(err) {
-      clearTimeout(timing);
-      cb(err);
-    });
-
-    const fn = timeoutWrapper(req);
-    timing = setTimeout(fn, options.timeout || 120000);
-  }
+  const opt = {
+    method: 'GET',
+    url: url.href,
+    timeout: 12000,
+    json: true,
+    gzip: true
+  };
+  options.proxy && (opt.proxy = options.proxy);
+  request(opt, function(error, response, body) {
+    const xml = new DOMParser().parseFromString(body);
+    cb(null, xml);
+  });
 }
 
 export const nodeURLHandler = {

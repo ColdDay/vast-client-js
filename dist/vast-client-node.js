@@ -1190,63 +1190,25 @@ var flashURLHandler = {
 };
 
 var uri = require('url');
-var fs = require('fs');
-var http = require('http');
-var https = require('https');
+
+var request = require('request');
+
 var DOMParser = require('xmldom').DOMParser;
 
 function get$2(url, options, cb) {
   url = uri.parse(url);
-  var httpModule = url.protocol === 'https:' ? https : http;
-  if (url.protocol === 'file:') {
-    fs.readFile(url.pathname, 'utf8', function (err, data) {
-      if (err) {
-        return cb(err);
-      }
-      var xml = new DOMParser().parseFromString(data);
-      cb(null, xml);
-    });
-  } else {
-    var timing = void 0;
-    var data = '';
-
-    var timeoutWrapper = function timeoutWrapper(req) {
-      return function () {
-        return req.abort();
-      };
-    };
-
-    var opt = {
-      method: 'GET',
-      path: url.href
-    };
-    if (options.host) {
-      opt.host = options.host;
-    }
-    if (options.port) {
-      opt.port = options.port;
-    }
-    var req = httpModule.get(opt, function (res) {
-      res.on('data', function (chunk) {
-        data += chunk;
-        clearTimeout(timing);
-        timing = setTimeout(fn, options.timeout || 120000);
-      });
-      res.on('end', function () {
-        clearTimeout(timing);
-        var xml = new DOMParser().parseFromString(data);
-        cb(null, xml);
-      });
-    });
-
-    req.on('error', function (err) {
-      clearTimeout(timing);
-      cb(err);
-    });
-
-    var fn = timeoutWrapper(req);
-    timing = setTimeout(fn, options.timeout || 120000);
-  }
+  var opt = {
+    method: 'GET',
+    url: url.href,
+    timeout: 12000,
+    json: true,
+    gzip: true
+  };
+  options.proxy && (opt.proxy = options.proxy);
+  request(opt, function (error, response, body) {
+    var xml = new DOMParser().parseFromString(body);
+    cb(null, xml);
+  });
 }
 
 var nodeURLHandler = {
@@ -1501,7 +1463,8 @@ var VASTParser = function (_EventEmitter) {
       this.maxWrapperDepth = options.wrapperLimit || DEFAULT_MAX_WRAPPER_DEPTH;
       this.fetchingOptions = {
         timeout: options.timeout,
-        withCredentials: options.withCredentials
+        withCredentials: options.withCredentials,
+        proxy: options.proxy
       };
 
       this.urlHandler = options.urlHandler || options.urlhandler || urlHandler;
