@@ -21,7 +21,17 @@ function get(url, options, cb) {
 
     const timeoutWrapper = req => () => req.abort();
 
-    const req = httpModule.get(url.href, function(res) {
+    const opt = {
+      method: 'GET',
+      path: url.href
+    };
+    if (options.host) {
+      opt.host = options.host;
+    }
+    if (options.port) {
+      opt.port = options.port;
+    }
+    const req = httpModule.get(opt, function(res) {
       res.on('data', function(chunk) {
         data += chunk;
         clearTimeout(timing);

@@ -1216,7 +1216,17 @@ function get$2(url, options, cb) {
       };
     };
 
-    var req = httpModule.get(url.href, function (res) {
+    var opt = {
+      method: 'GET',
+      path: url.href
+    };
+    if (options.host) {
+      opt.host = options.host;
+    }
+    if (options.port) {
+      opt.port = options.port;
+    }
+    var req = httpModule.get(opt, function (res) {
       res.on('data', function (chunk) {
         data += chunk;
         clearTimeout(timing);
