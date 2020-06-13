@@ -1,10 +1,22 @@
-function track(URLTemplates, variables, options) {
+const request = require('request');
+
+function track(URLTemplates, variables, options, proxy) {
   const URLs = resolveURLTemplates(URLTemplates, variables, options);
 
   URLs.forEach(URL => {
     if (typeof window !== 'undefined' && window !== null) {
       const i = new Image();
       i.src = URL;
+    } else {
+      const opt = {
+        method: 'GET',
+        url: URL,
+        timeout: 12000
+      };
+      if (proxy) {
+        opt.proxy = proxy;
+      }
+      request(opt, function() {});
     }
   });
 }

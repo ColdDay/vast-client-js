@@ -125,13 +125,27 @@ var VAST = (function (exports) {
     return CreativeCompanion;
   }(Creative);
 
-  function track(URLTemplates, variables, options) {
+  var request = require('request');
+
+  function track(URLTemplates, variables, options, proxy) {
     var URLs = resolveURLTemplates(URLTemplates, variables, options);
 
     URLs.forEach(function (URL) {
       if (typeof window !== 'undefined' && window !== null) {
         var i = new Image();
         i.src = URL;
+      } else {
+        var opt = {
+          method: 'GET',
+          url: URL,
+          timeout: 12000
+        };
+        if (proxy) {
+          opt.proxy = proxy;
+        }
+        request(opt, function (error, response, body) {
+          console.log('监测数据发送成功', URL);
+        });
       }
     });
   }
@@ -2606,6 +2620,7 @@ var VAST = (function (exports) {
      */
     function VASTTracker(client, ad, creative) {
       var variation = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+      var proxy = arguments[4];
       classCallCheck(this, VASTTracker);
 
       var _this = possibleConstructorReturn(this, (VASTTracker.__proto__ || Object.getPrototypeOf(VASTTracker)).call(this));
@@ -2616,6 +2631,7 @@ var VAST = (function (exports) {
       _this.muted = false;
       _this.impressed = false;
       _this.skippable = false;
+      _this.proxy = proxy;
       _this.trackingEvents = {};
       // We need to save the already triggered quartiles, in order to not trigger them again
       _this._alreadyTriggeredQuartiles = {};
@@ -3050,7 +3066,7 @@ var VAST = (function (exports) {
           variables['CONTENTPLAYHEAD'] = this.progressFormatted();
         }
 
-        util.track(URLTemplates, variables, options);
+        util.track(URLTemplates, variables, options, this.proxy);
       }
 
       /**

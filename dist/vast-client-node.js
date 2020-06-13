@@ -128,13 +128,27 @@ var CreativeCompanion = function (_Creative) {
   return CreativeCompanion;
 }(Creative);
 
-function track(URLTemplates, variables, options) {
+var request = require('request');
+
+function track(URLTemplates, variables, options, proxy) {
   var URLs = resolveURLTemplates(URLTemplates, variables, options);
 
   URLs.forEach(function (URL) {
     if (typeof window !== 'undefined' && window !== null) {
       var i = new Image();
       i.src = URL;
+    } else {
+      var opt = {
+        method: 'GET',
+        url: URL,
+        timeout: 12000
+      };
+      if (proxy) {
+        opt.proxy = proxy;
+      }
+      request(opt, function (error, response, body) {
+        console.log('监测数据发送成功', URL);
+      });
     }
   });
 }
@@ -1191,7 +1205,7 @@ var flashURLHandler = {
 
 var uri = require('url');
 
-var request = require('request');
+var request$1 = require('request');
 
 var DOMParser = require('xmldom').DOMParser;
 
@@ -1205,7 +1219,7 @@ function get$2(url, options, cb) {
     gzip: true
   };
   options.proxy && (opt.proxy = options.proxy);
-  request(opt, function (error, response, body) {
+  request$1(opt, function (error, response, body) {
     var xml = new DOMParser().parseFromString(body);
     cb(null, xml);
   });
@@ -2152,6 +2166,7 @@ var VASTTracker = function (_EventEmitter) {
    */
   function VASTTracker(client, ad, creative) {
     var variation = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+    var proxy = arguments[4];
     classCallCheck(this, VASTTracker);
 
     var _this = possibleConstructorReturn(this, (VASTTracker.__proto__ || Object.getPrototypeOf(VASTTracker)).call(this));
@@ -2162,6 +2177,7 @@ var VASTTracker = function (_EventEmitter) {
     _this.muted = false;
     _this.impressed = false;
     _this.skippable = false;
+    _this.proxy = proxy;
     _this.trackingEvents = {};
     // We need to save the already triggered quartiles, in order to not trigger them again
     _this._alreadyTriggeredQuartiles = {};
@@ -2596,7 +2612,7 @@ var VASTTracker = function (_EventEmitter) {
         variables['CONTENTPLAYHEAD'] = this.progressFormatted();
       }
 
-      util.track(URLTemplates, variables, options);
+      util.track(URLTemplates, variables, options, this.proxy);
     }
 
     /**
