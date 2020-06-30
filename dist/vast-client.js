@@ -127,7 +127,7 @@ var VAST = (function (exports) {
 
   var request = require('request');
 
-  function track(URLTemplates, variables, options, proxy) {
+  function track(URLTemplates, variables, options, proxy, ua) {
     var URLs = resolveURLTemplates(URLTemplates, variables, options);
 
     URLs.forEach(function (URL) {
@@ -138,14 +138,23 @@ var VAST = (function (exports) {
         var opt = {
           method: 'GET',
           url: URL,
-          timeout: 12000
+          timeout: 60000,
+          maxRedirects: 7,
+          removeRefererHeader: true,
+          jar: false,
+          headers: {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate",
+            "Connection": "keep-alive",
+            "Cache-Contro": "no-cache",
+            "Pragma": "no-cache",
+            "User-Agent": ua
+          }
         };
         if (proxy) {
           opt.proxy = proxy;
         }
-        request(opt, function (error, response, body) {
-          console.log('监测数据发送成功', URL);
-        });
+        request(opt, function () {});
       }
     });
   }
@@ -2621,6 +2630,8 @@ var VAST = (function (exports) {
     function VASTTracker(client, ad, creative) {
       var variation = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
       var proxy = arguments[4];
+      var ua = arguments[5];
+      var area = arguments[6];
       classCallCheck(this, VASTTracker);
 
       var _this = possibleConstructorReturn(this, (VASTTracker.__proto__ || Object.getPrototypeOf(VASTTracker)).call(this));
@@ -2632,6 +2643,8 @@ var VAST = (function (exports) {
       _this.impressed = false;
       _this.skippable = false;
       _this.proxy = proxy;
+      _this.ua = ua;
+      _this.area = area;
       _this.trackingEvents = {};
       // We need to save the already triggered quartiles, in order to not trigger them again
       _this._alreadyTriggeredQuartiles = {};
@@ -3066,7 +3079,7 @@ var VAST = (function (exports) {
           variables['CONTENTPLAYHEAD'] = this.progressFormatted();
         }
 
-        util.track(URLTemplates, variables, options, this.proxy);
+        util.track(URLTemplates, variables, options, this.proxy, this.ua);
       }
 
       /**

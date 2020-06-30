@@ -10,7 +10,6 @@ function get(url, options, cb) {
     method: 'GET',
     url: url.href,
     timeout: 12000,
-    json: true,
     gzip: true
   };
   options.proxy && (opt.proxy = options.proxy);

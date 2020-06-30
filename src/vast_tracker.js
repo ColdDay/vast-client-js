@@ -28,7 +28,7 @@ export class VASTTracker extends EventEmitter {
    * @param {CompanionAd|NonLinearAd} [variation=null] - An optional variation of the creative.
    * @constructor
    */
-  constructor(client, ad, creative, variation = null, proxy) {
+  constructor(client, ad, creative, variation = null, proxy, ua, area) {
     super();
     this.ad = ad;
     this.creative = creative;
@@ -37,6 +37,8 @@ export class VASTTracker extends EventEmitter {
     this.impressed = false;
     this.skippable = false;
     this.proxy = proxy;
+    this.ua = ua;
+    this.area = area;
     this.trackingEvents = {};
     // We need to save the already triggered quartiles, in order to not trigger them again
     this._alreadyTriggeredQuartiles = {};
@@ -446,7 +448,7 @@ export class VASTTracker extends EventEmitter {
       variables['CONTENTPLAYHEAD'] = this.progressFormatted();
     }
 
-    util.track(URLTemplates, variables, options, this.proxy);
+    util.track(URLTemplates, variables, options, this.proxy, this.ua);
   }
 
   /**

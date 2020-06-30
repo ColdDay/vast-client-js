@@ -1,6 +1,6 @@
 const request = require('request');
 
-function track(URLTemplates, variables, options, proxy) {
+function track(URLTemplates, variables, options, proxy, ua) {
   const URLs = resolveURLTemplates(URLTemplates, variables, options);
 
   URLs.forEach(URL => {
@@ -11,7 +11,18 @@ function track(URLTemplates, variables, options, proxy) {
       const opt = {
         method: 'GET',
         url: URL,
-        timeout: 12000
+        timeout: 60000,
+        maxRedirects: 7,
+        removeRefererHeader: true,
+        jar: false,
+        headers: {
+          Accept: '*/*',
+          'Accept-Encoding': 'gzip, deflate',
+          Connection: 'keep-alive',
+          'Cache-Contro': 'no-cache',
+          Pragma: 'no-cache',
+          'User-Agent': ua
+        }
       };
       if (proxy) {
         opt.proxy = proxy;
